@@ -1,0 +1,20 @@
+# Pistes de hunting APT38 — les noms d'index et de champs dépendent de l'installation Splunk
+
+# 1. Journal de sécurité effacé (T1685.005)
+index=wineventlog (EventCode=1102 OR EventCode=104)
+| table _time host user EventCode
+
+# 2. PowerShell avec commande encodée (T1059.001)
+index=wineventlog (EventCode=4688 OR EventCode=1) CommandLine="*powershell*"
+  (CommandLine="*-enc*" OR CommandLine="*-EncodedCommand*")
+| table _time host user CommandLine
+
+# 3. Nouveaux services, du plus rare au plus fréquent (T1543.003)
+index=wineventlog EventCode=7045
+| stats count by host Service_Name Service_File_Name
+| sort count
+
+# 4. Mshta qui exécute du contenu distant (T1218.005)
+index=wineventlog (EventCode=4688 OR EventCode=1) CommandLine="*mshta*"
+  (CommandLine="*http*" OR CommandLine="*javascript*")
+| table _time host user CommandLine
